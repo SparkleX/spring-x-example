@@ -19,25 +19,18 @@ interface Foo {
 }
 @provide(FooRepository)
 class FooRepository extends BaseRepository<Foo, FooKey> {
-    @postConstruct()
-    init() {
-        super.init();
-    }    
-    initTableName(): string {
-        return "foo";
-    }    
+	protected getTableName(): string {
+		return "foo";
+	}  
 }
 @provide(FooService)
 class FooService extends BaseService<Foo, FooKey, FooRepository>{
-    @postConstruct()
-    init() {
-        super.init();
-    }
-    @inject(FooRepository)
+	@inject(FooRepository)
     repo: FooRepository
-    initRepo(): FooRepository {
-        return this.repo;
-    }
+
+	getRepository(): FooRepository {
+		return this.repo;
+	}
 }
 
 @controller("/foo")
@@ -72,7 +65,7 @@ async function main(): Promise<void> {
 		pool: pool
 	});	
     ApplicationContext.DEFAULT = context;    
-	await txAutoCommit(async() =>{
+	await txTransaction(async() =>{
 		const conn: Connection = await context.getConnection();
 		let result = await conn.execute('create table foo (id integer primary key, name);');
 		console.debug(result);
