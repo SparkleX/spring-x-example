@@ -2,7 +2,7 @@
 import * as express from "express";
 import * as bodyParser from 'body-parser';
 
-import { initSqlJs, ApplicationContext, BaseService, BaseRepository, txTransaction, SqlJsConnectionPool, Connection } from 'ts-spring';
+import { initSqlJs, ApplicationContext, BaseService, BaseRepository, txTransaction, SqlJsConnectionPool, Connection, BaseController } from 'ts-spring';
 import { createNamespace } from 'cls-hooked';
 
 interface FooKey {
@@ -30,6 +30,15 @@ class FooService extends BaseService<Foo, FooKey, FooRepository>{
 		return this.repo;
 	}
 }
+const service = new FooService();
+class FooController extends BaseController<Foo, FooKey, FooService>{
+	protected getService(): FooService {
+		return service;
+	}
+}
+const controller = new FooController();
+
+
 
 async function main(): Promise<void> {
 	var SQL = await initSqlJs();
@@ -52,16 +61,18 @@ async function main(): Promise<void> {
 	const app = express();
 	const port = 3000;
 	
-	const service = new FooService();
+	
 	
 	app.use(bodyParser.urlencoded({
 		extended: true
 	}));
 	app.use(bodyParser.json());
 	
-	app.get( "/foo", async ( req, res ) => {
-		var data = await txTransaction(()=>service.findAll()) ;
-		res.send(data);
+	app.get( "/foo", ( req, res ) => {
+		controller.defaultFindAll(req, res);
+	} );
+	app.get( "/foo/:id", ( req, res ) => {
+		controller.defaultFindById(req, res, {id: parseInt(req.params.id)});
 	} );
 	
     app.listen( port, () => {

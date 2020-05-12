@@ -5,9 +5,9 @@ import * as bodyParser from 'body-parser';
 import "reflect-metadata";
 import { inject, Container, postConstruct } from 'inversify';
 import { provide ,buildProviderModule } from 'inversify-binding-decorators';
-import { InversifyExpressServer, httpGet, controller } from 'inversify-express-utils';
+import { InversifyExpressServer, httpGet, controller, queryParam, requestParam } from 'inversify-express-utils';
 
-import { initSqlJs, ApplicationContext, BaseService, BaseRepository, txTransaction, SqlJsConnectionPool, Connection, txAutoCommit } from 'ts-spring';
+import { initSqlJs, ApplicationContext, BaseService, BaseRepository, txTransaction, SqlJsConnectionPool, Connection, txAutoCommit, BaseController } from 'ts-spring';
 import { createNamespace } from 'cls-hooked';
 
 interface FooKey {
@@ -34,15 +34,22 @@ class FooService extends BaseService<Foo, FooKey, FooRepository>{
 }
 
 @controller("/foo")
-class FooController{
+class FooController extends BaseController<Foo, FooKey, FooService>{
+	protected getService(): FooService {
+		return this.service;
+	}
     @inject(FooService)
     service: FooService;
     @httpGet("/")
-    private async index(req: express.Request, res: express.Response): Promise<void> {
-        var data = await txTransaction(()=>this.service.findAll()) ;
-        res.status(200).json(data);
-    }
+    private async findAll(req: express.Request, res: express.Response): Promise<void> {
+        return super.defaultFindAll(req, res);
+	}
+    @httpGet("/:id")
+    private async findById(@requestParam("id") id: number, req: express.Request, res: express.Response): Promise<void> {
+        return super.defaultFindById(req, res, {id: id});
+    }	
 }
+
 let container = new Container({ skipBaseClassChecks: true });
 container.load(buildProviderModule());
 
