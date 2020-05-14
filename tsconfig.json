@@ -9,7 +9,7 @@
         "experimentalDecorators": true        
     },
     "include": [
-      "src"
+      "src", "log1.ts"
     ],
     "exclude": [
         "**/*.spec.ts"
